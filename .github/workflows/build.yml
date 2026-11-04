@@ -15,13 +15,16 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17
-    
+          java-version: '17'
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+
+      - name: Accept Android licenses
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 || true
 
       - name: Extract ZIP
         run: |
@@ -31,9 +34,11 @@ jobs:
 
       - name: Build APK
         run: |
-          PROJECT=$(find work -name settings.gradle.kts -printf '%h\n' | head -n 1)
+          SETTINGS=$(find work \( -name settings.gradle.kts -o -name settings.gradle \) | head -n 1)
+          PROJECT=$(dirname "$SETTINGS")
+          echo "Project folder: $PROJECT"
           cd "$PROJECT"
-          gradle assembleDebug
+          gradle assembleDebug --no-daemon
 
       - name: Save APK
         uses: actions/upload-artifact@v4
